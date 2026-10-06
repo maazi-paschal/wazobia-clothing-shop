@@ -9,6 +9,15 @@ exports.handler = async (event) => {
     status(c) { statusCode = c; return this; },
     json(o) { payload = o; return this; },
   };
-  await checkout({ method: event.httpMethod, body: event.body }, res);
+  try {
+    await checkout({ method: event.httpMethod, body: event.body }, res);
+  } catch (err) {
+    console.error("Netlify checkout handler error:", err);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: `Server error: ${err.message || 'Checkout process failed'}`, details: err })
+    };
+  }
   return { statusCode, headers, body: JSON.stringify(payload) };
 };

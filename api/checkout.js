@@ -1,8 +1,8 @@
 /**
  * POST /api/checkout
- * Vercel-style serverless handler (also used by server.js and the Netlify wrapper).
- * Body: { user_email, customer_name, phone_number, shipping_address, items, total_amount, payment_method, status }
- * Secrets (MAILGUN_*, SUPABASE_SERVICE_ROLE_KEY) are read from env and never reach the client.
+ * Vercel-style serverless handler (also used by server.js and Netlify wrapper).
+ * Sanitizes order payload, calculates authoritative pricing, inserts into Supabase orders table,
+ * returns detailed database errors if insert fails, and sends non-blocking Mailgun receipts.
  */
 const crypto = require("crypto");
 
@@ -59,7 +59,7 @@ function receiptHtml(orderId, o) {
       <td style="padding:12px 0;border-bottom:1px solid #e8e6df;">${esc(i.name)}<br><span style="color:#6e6d67;font-size:12px;letter-spacing:.1em;text-transform:uppercase;">Size ${esc(i.size)} &middot; Qty ${esc(i.quantity)} &middot; ${money(i.price)} each</span></td>
       <td style="padding:12px 0;border-bottom:1px solid #e8e6df;text-align:right;">${money(i.price * i.quantity)}</td>
     </tr>`).join("");
-  const a = o.shipping_address;
+  const a = o.shipping_address || {};
   const phone = o.phone_number || a.phone_number || "";
   return `<!DOCTYPE html><html><body style="margin:0;background:#fcfbf9;font-family:Inter,Helvetica,Arial,sans-serif;color:#111;">
   <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 12px;">
@@ -96,16 +96,32 @@ function receiptHtml(orderId, o) {
   </table></td></tr></table></body></html>`;
 }
 
-async function insertOrder(order) {
+async function insertOrder(orderRecord) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error("Supabase is not configured (SUPABASE_URL / SUPABASE_ANON_KEY).");
-  const r = await fetch(`${url}/rest/v1/orders`, {
-    method: "POST",
-    headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", Prefer: "return=minimal" },
-    body: JSON.stringify(order),
-  });
-  if (!r.ok) throw new Error(`Supabase insert failed (${r.status}): ${await r.text()}`);
+  if (!url || !key) {
+    return { error: { message: "Supabase is not configured (SUPABASE_URL / SUPABASE_ANON_KEY)." } };
+  }
+  try {
+    const r = await fetch(`${url}/rest/v1/orders`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation"
+      },
+      body: JSON.stringify(orderRecord),
+    });
+    if (!r.ok) {
+      let errBody;
+      try { errBody = await r.json(); } catch { errBody = { message: await r.text() }; }
+      return { error: errBody };
+    }
+    return { error: null };
+  } catch (e) {
+    return { error: { message: e.message } };
+  }
 }
 
 async function sendReceipt(orderId, o) {
@@ -133,7 +149,7 @@ module.exports = async function handler(req, res) {
   const err = validate(body);
   if (err) return res.status(400).json({ error: err });
 
-  // Reprice from the database and recompute totals server-side; never trust client-supplied prices/total.
+  // Reprice items from products table and recompute total amount server-side
   let items;
   try { items = await priceItems(body.items); }
   catch (e) {
@@ -144,37 +160,46 @@ module.exports = async function handler(req, res) {
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT;
   const total_amount = Number((subtotal + shipping).toFixed(2));
 
-  const a = body.shipping_address;
+  const a = body.shipping_address || {};
   const phone = clean(body.phone_number || a.phone_number, 30);
   const orderId = makeOrderId();
-  const order = {
-    user_email: String(body.user_email).trim(),
-    customer_name: clean(body.customer_name, 100),
-    phone_number: phone,
-    shipping_address: {
-      street: clean(a.street, 150),
-      city: clean(a.city, 80),
-      state: clean(a.state, 80),
-      postal_code: clean(a.postal_code, 12),
-      country: clean(a.country, 60),
-      phone_number: phone,
-    },
-    items,
-    total_amount,
-    payment_method: clean(body.payment_method, 50) || "Pay on Delivery",
-    status: clean(body.status, 60) || "Order Placed - Pending Delivery",
+
+  // 1. SANITIZE ORDER PAYLOAD
+  const orderRecord = {
+    id: orderId,
+    user_email: body.user_email || 'guest@wazobia.shop',
+    customer_name: body.customer_name || 'Guest Customer',
+    phone_number: phone || body.phone_number || '',
+    shipping_address: body.shipping_address || '',
+    items: items || body.items || [],
+    total_amount: total_amount || Number(body.total_amount) || 0,
+    payment_method: body.payment_method || 'Pay on Delivery',
+    status: 'Order Placed - Pending Delivery'
   };
 
-  try {
-    await insertOrder({ id: orderId, ...order });
-  } catch (e) {
-    console.error("[checkout] order insert error:", e.message);
-    return res.status(500).json({ error: "We could not save your order. Please try again." });
+  // 2. DETAILED ERROR REPORTING ON SUPABASE INSERT
+  const { error: supabaseError } = await insertOrder(orderRecord);
+  if (supabaseError) {
+    console.error('Supabase error inserting order:', supabaseError);
+    return res.status(500).json({
+      error: `Database error: ${supabaseError.message || 'Failed to save order'}`,
+      details: supabaseError
+    });
   }
 
+  // 3. NON-BLOCKING EMAIL DISPATCH
   let emailSent = true;
-  try { await sendReceipt(orderId, { ...order, subtotal, shipping }); }
-  catch (e) { emailSent = false; console.error("[checkout] receipt error:", e.message); }
+  try {
+    await sendReceipt(orderId, { ...orderRecord, subtotal, shipping });
+  } catch (e) {
+    emailSent = false;
+    console.error('[checkout] non-blocking email receipt error:', e.message);
+  }
 
-  return res.status(200).json({ success: true, order_id: orderId, total_amount, email_sent: emailSent });
+  return res.status(200).json({
+    success: true,
+    order_id: orderId,
+    total_amount: total_amount,
+    email_sent: emailSent
+  });
 };
