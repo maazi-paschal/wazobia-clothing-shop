@@ -21,10 +21,16 @@ No build step, no bundler, no npm dependencies. `node server.js` runs everything
 
 | Concern | Where | Key used |
 |---|---|---|
-| Read products (`select * from products`), Google auth | **Browser** (`index.html`, `common.js` via `sb`) | public `SUPABASE_ANON_KEY` only (RLS read policy) |
+| Read products (`select * from products`), Google auth | **Browser** (`index.html`, `common.js` via `sb`) | dynamically fetched from `/api/config` (`SUPABASE_ANON_KEY`, `SUPABASE_URL`) |
 | Re-price cart from `products`, insert into `orders`, send Mailgun receipt | **Server** (`api/checkout.js`) | `SUPABASE_SERVICE_ROLE_KEY` (or anon + insert policy), `MAILGUN_API_KEY` |
 
 The storefront has **no hardcoded product list**: `loadProducts()` queries Supabase and shows a loading skeleton, then either the grid or an error message with Retry (`console.error` on failure). If the table is empty, the grid says no products are available — seed it by running `supabase/seed.sql`. The 36-item source data lives in `scripts/catalog-data.js` (never loaded by the browser); `node scripts/generate-seed.js` regenerates `supabase/seed.sql` from it. `server.js` refuses to serve `scripts/`, `supabase/`, `api/`, `.env`.
+
+## Dynamic Configuration & Secret Management
+
+- Public Supabase config (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) is served dynamically via serverless functions (`api/config.js` and `netlify/functions/config.js`).
+- Client initialization (`initSupabase()` in `common.js`) fetches configuration asynchronously from `/api/config` before instantiating `window.supabase.createClient(...)`.
+- Zero real credential/secret strings exist in repository tracked files (`common.js`, `README.md`, `.env.example`, `netlify.toml`). Local environments use `.env` (gitignored).
 
 ## Design System Tokens (do not alter)
 
@@ -85,6 +91,8 @@ alter table orders enable row level security;
 
 `POST /api/checkout` body `{ user_email, customer_name, phone_number, shipping_address, items, total_amount, payment_method, status }` → `200 { success, order_id, total_amount, email_sent }`; `400` on validation or unknown product id; `500` if pricing lookup or DB insert fails. The server sanitizes/length-limits all strings, **ignores client prices and `total_amount`**, re-prices each item from `products` by `id`, and recomputes the total (free shipping ≥ $100, else $10 flat — keep in sync with `common.js`). `checkout.html` validates (email regex, phone, non-empty address/city/state/postal code), sanitizes, shows inline errors, and disables **Confirm Order (Pay on Delivery)** with a spinner while the request is in flight.
 
+`GET /api/config` → `200 { supabaseUrl, supabaseAnonKey }`. Returns JSON config extracted securely from environment variables.
+
 ## Verification & Testing Protocol
 
 1. **Manual browser checks:** run `node server.js`; verify hero, filters, size pills, add-to-bag toast, drawer steppers, free-shipping bar, cookie banner, refresh persistence, checkout form, receipt modal, Continue Shopping clears cart.
@@ -97,15 +105,15 @@ alter table orders enable row level security;
 - Do not casually introduce heavy frameworks (React, Tailwind, bundlers).
 - Keep design system tokens intact.
 - Preserve database column names.
-- Keep sensitive keys (Mailgun, service role) off the client. Only the public anon key may appear in `common.js`.
+- Keep sensitive keys (Mailgun, service role) off the client. No hardcoded Supabase keys in client files; fetch dynamically via `/api/config`.
 
 ## Handoff Checklist
 
-- [x] Anon key set in `common.js`; local `.env` (gitignored) holds Supabase + Mailgun values. Still set env vars on the host (Vercel/Netlify).
+- [x] Config fetched dynamically via `/api/config` (`api/config.js` & `netlify/functions/config.js`); local `.env` (gitignored) holds Supabase + Mailgun values. Set env vars on host (Vercel/Netlify).
 - [ ] `products` / `orders` tables + RLS created; Google provider enabled.
 - [ ] Mailgun domain configured; recipient authorized if sandbox.
 - [ ] Manual, DB, email and console checks above passed.
-- [ ] This file updated with any changes made this turn.
+- [x] This file updated with any changes made this turn.
 
 ## Change Log
 
@@ -114,3 +122,4 @@ alter table orders enable row level security;
 - Storefront upgrade: full-bleed hero with Shop Men/Women CTAs, value strip, responsive filters (pills on desktop, dropdowns <=768px, sort, reset), 36-item catalog (`catalog.js`), card ratings/tags/"Added ✓" state, mobile overflow fixes. Added `tag`, `rating`, `reviews` columns to `products`; 'Outerwear' filter is derived client-side from the product name.
 - Luxury Editorial Footer & Pay on Delivery: Added dark luxury footer (#111111) with newsletter subscription and policy modals across index.html and checkout.html; implemented Pay on Delivery flow with phone number validation, "TEST STORE • PAY ON DELIVERY" badge, doorstep total highlight, and Mailgun confirmation email with `TOTAL DUE ON DELIVERY` banner.
 - Phone Selector, Navbar Refinement & Profile Page: Implemented country code dropdown (+234, +1, +44, +233, +254, +27) on checkout.html; rearranged navbar to position Bag icon left of extreme-right circular user avatar with "Hi, [FirstName]" greeting on desktop; created dedicated profile.html displaying user info, VIP badge, and dynamic order history queried from Supabase.
+- Dynamic Configuration & Secret Elimination: Created serverless endpoints `api/config.js` and `netlify/functions/config.js` serving `process.env.SUPABASE_URL` and `process.env.SUPABASE_ANON_KEY`; updated `netlify.toml` routing; refactored `common.js` to initialize Supabase via dynamic `initSupabase()` fetch; scrubbed all hardcoded credentials/secrets across repo (`common.js`, `README.md`, `.env.example`, `netlify.toml`).

@@ -157,6 +157,7 @@
 
       // Fetch user's orders from Supabase table 'orders'
       try {
+        if (!sb) await initSupabase();
         if (!sb) throw new Error("Supabase unavailable");
         const { data: userOrders, error } = await sb
           .from("orders")

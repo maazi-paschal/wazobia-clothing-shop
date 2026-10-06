@@ -45,7 +45,7 @@ server.js           Zero-dependency local dev server
 Copy `.env.example` to `.env`:
 
 ```env
-SUPABASE_URL=https://adrkhbpriicdejxlbmgq.supabase.co
+SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
 SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY=      # optional, server-only
 MAILGUN_API_KEY=YOUR_MAILGUN_API_KEY
@@ -53,7 +53,7 @@ MAILGUN_DOMAIN=sandboxXXXXXXXX.mailgun.org
 MAILGUN_API_BASE=https://api.mailgun.net   # EU: https://api.eu.mailgun.net
 ```
 
-The browser also needs the **public** anon key: replace `YOUR_SUPABASE_ANON_KEY` in [common.js](common.js). Never put the Mailgun key or service-role key in client code.
+The browser dynamically retrieves public configuration from the serverless endpoint `/api/config` at runtime. No keys or secret strings are hardcoded in client scripts.
 
 ## Supabase Setup
 

@@ -1,13 +1,32 @@
 /* Wazobia shared client logic: Supabase client, auth, cart, toasts. */
-const SUPABASE_URL = "https://adrkhbpriicdejxlbmgq.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcmtoYnByaWljZGVqeGxibWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMzgxMDAsImV4cCI6MjEwNjcxNDEwMH0.u1mmHqZkjWZosF-K-1riRWQH1RLEfTdjO-zL9FB5k2I";
 const FREE_SHIPPING_THRESHOLD = 100;
 const SHIPPING_FLAT = 10;
 const CART_KEY = "wazobia_cart_v1";
 
-const sb = (window.supabase && window.supabase.createClient)
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
+let sb = null;
+let supabaseInitPromise = null;
+
+async function initSupabase() {
+  if (sb) return sb;
+  if (supabaseInitPromise) return supabaseInitPromise;
+  supabaseInitPromise = (async () => {
+    try {
+      const res = await fetch("/api/config");
+      const config = await res.json();
+      if (!config.supabaseUrl || !config.supabaseAnonKey) {
+        throw new Error("Missing Supabase configuration from server");
+      }
+      if (window.supabase && window.supabase.createClient) {
+        sb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      }
+      return sb;
+    } catch (err) {
+      console.error("Failed to initialize Supabase client:", err);
+      return null;
+    }
+  })();
+  return supabaseInitPromise;
+}
 
 const fmt = (n) => "$" + Number(n).toFixed(2);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -64,11 +83,17 @@ const GOOGLE_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4
 
 let currentUser = null;
 async function signInWithGoogle() {
+  if (!sb) await initSupabase();
   if (!sb) return toast("Auth service unavailable offline.", "error");
   const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } });
   if (error) toast(error.message, "error");
 }
-async function signOut() { if (sb) await sb.auth.signOut(); currentUser = null; renderAuth(); }
+async function signOut() {
+  if (!sb) await initSupabase();
+  if (sb) await sb.auth.signOut();
+  currentUser = null;
+  renderAuth();
+}
 
 function renderAuth() {
   const el = document.getElementById("auth-area");
@@ -92,6 +117,7 @@ function renderAuth() {
 }
 
 async function initAuth() {
+  if (!sb) await initSupabase();
   if (sb) {
     try {
       const { data } = await sb.auth.getSession();

@@ -13,11 +13,17 @@ try {
 } catch { /* no .env */ }
 
 const checkout = require("./api/checkout.js");
+const configHandler = require("./api/config.js");
 const PORT = process.env.PORT || 3000;
 const TYPES = { ".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".ico": "image/x-icon" };
 
 http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
+  if (url.pathname === "/api/config") {
+    res.status = (code) => { res.statusCode = code; return res; };
+    res.json = (obj) => { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(obj)); };
+    return configHandler(req, res).catch((e) => { console.error(e); res.status(500).json({ error: "Server error" }); });
+  }
   if (url.pathname === "/api/checkout") {
     let raw = "";
     req.on("data", (c) => { raw += c; if (raw.length > 1e6) req.destroy(); });
