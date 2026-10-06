@@ -44,11 +44,20 @@
         <div class="skeleton line-s"></div>
       </aside>
 
-      <!-- Right Column: Order History -->
+      <!-- Right Column: Order History & Account Management -->
       <section class="orders-section">
         <h2>Order History</h2>
         <div id="orders-list">
           <div class="card skeleton-card"><div class="skeleton line-m"></div><div class="skeleton line-s"></div></div>
+        </div>
+
+        <!-- Account Reset / Danger Zone -->
+        <div class="danger-card" id="danger-card" style="display:none;">
+          <div class="danger-info">
+            <h3>Account Management</h3>
+            <p>Delete account data, reset welcome email status, and clear test order history.</p>
+          </div>
+          <button class="btn-danger" id="delete-account-btn" onclick="deleteUserAccount()">Delete Account &amp; Reset Data</button>
         </div>
       </section>
     </div>
@@ -127,8 +136,10 @@
     async function loadProfileAndOrders(user) {
       const card = $("profile-card");
       const list = $("orders-list");
+      const dangerCard = $("danger-card");
 
       if (!user) {
+        if (dangerCard) dangerCard.style.display = "none";
         card.innerHTML = `
           <div class="profile-avatar-lg" style="display:flex;align-items:center;justify-content:center;font-size:2rem">👤</div>
           <h2 class="profile-name">Guest Customer</h2>
@@ -143,6 +154,7 @@
         return;
       }
 
+      if (dangerCard) dangerCard.style.display = "flex";
       const m = user.user_metadata || {};
       const fullName = m.full_name || m.name || user.email || "Valued Customer";
       const avatarSrc = m.avatar_url || m.picture || FALLBACK_IMG;

@@ -6,6 +6,15 @@ alter table products add column if not exists reviews integer default 0;
 alter table orders add column if not exists phone_number text;
 alter table orders add column if not exists payment_method text default 'Pay on Delivery';
 
+create table if not exists user_carts (
+  user_email text primary key,
+  items jsonb default '[]'::jsonb,
+  updated_at timestamptz default now()
+);
+alter table user_carts enable row level security;
+create policy "public user_carts access" on user_carts for all using (true) with check (true);
+
+
 insert into products (id, name, category, price, image_url, description, sizes, tag, rating, reviews) values
 ('wz-001', 'Adire Graphic Tee', 'Men', 58, 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80', 'Heavyweight organic cotton tee with a hand-printed Adire motif.', '["S","M","L","XL","XXL"]'::jsonb, 'BESTSELLER', 4.9, 128),
 ('wz-002', 'Sahara Graphic Tee', 'Men', 54, 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=900&q=80', 'Boxy terracotta tee with a quiet back print.', '["S","M","L","XL","XXL"]'::jsonb, null, 4.6, 71),

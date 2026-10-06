@@ -54,7 +54,17 @@ const Cart = {
   load() {
     try { this.items = JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch { this.items = []; }
   },
-  save() { localStorage.setItem(CART_KEY, JSON.stringify(this.items)); this.listeners.forEach((fn) => fn()); },
+  save(syncCloud = true) {
+    localStorage.setItem(CART_KEY, JSON.stringify(this.items));
+    this.listeners.forEach((fn) => fn());
+    if (syncCloud && currentUser?.email && sb) {
+      sb.from("user_carts").upsert({
+        user_email: currentUser.email,
+        items: this.items,
+        updated_at: new Date().toISOString()
+      }).then(() => {}).catch(err => console.warn("Cloud cart save error:", err));
+    }
+  },
   onChange(fn) { this.listeners.push(fn); },
   add(p, size) {
     const found = this.items.find((i) => i.id === p.id && i.size === size);
@@ -77,6 +87,24 @@ const Cart = {
   total() { return this.subtotal() + this.shipping(); },
 };
 Cart.load();
+
+// Auto-Sync on Tab Focus (Web <-> Mobile)
+window.addEventListener("focus", async () => {
+  if (currentUser?.email && sb) {
+    try {
+      const { data } = await sb
+        .from("user_carts")
+        .select("items")
+        .eq("user_email", currentUser.email)
+        .maybeSingle();
+
+      if (data && JSON.stringify(data.items) !== JSON.stringify(Cart.items)) {
+        Cart.items = data.items || [];
+        Cart.save(false);
+      }
+    } catch (e) { console.warn("Focus cart sync error:", e); }
+  }
+});
 
 /* ---------- Auth ---------- */
 const GOOGLE_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 010-9.4l-7.9-6.1a24 24 0 000 21.6l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';
@@ -122,6 +150,63 @@ function checkWelcomeEmail(user) {
         }
       })
       .catch((err) => console.error("Welcome email error:", err));
+  }
+}
+
+async function syncCloudCartOnAuth(user) {
+  if (!user || !user.email || !sb) return;
+  try {
+    const { data: cartData, error } = await sb
+      .from("user_carts")
+      .select("items")
+      .eq("user_email", user.email)
+      .maybeSingle();
+
+    if (!error && cartData && Array.isArray(cartData.items) && cartData.items.length > 0) {
+      Cart.items = cartData.items;
+      Cart.save(false);
+    } else if (Cart.items.length > 0) {
+      Cart.save(true);
+    }
+  } catch (err) {
+    console.warn("Cloud cart sync error:", err);
+  }
+}
+
+async function deleteUserAccount() {
+  if (!currentUser) return;
+  const confirmed = confirm(
+    "Are you sure you want to delete your account data? This will clear your cart, remove test orders, and reset your welcome email status so you can test as a brand-new user."
+  );
+  if (!confirmed) return;
+
+  try {
+    if (!sb) await initSupabase();
+    const userEmail = currentUser.email;
+
+    if (sb && userEmail) {
+      await sb.from("user_carts").delete().eq("user_email", userEmail);
+      await sb.from("orders").delete().eq("user_email", userEmail);
+    }
+
+    if (userEmail) {
+      localStorage.removeItem("wazobia_welcome_sent_" + userEmail);
+    }
+    localStorage.removeItem(CART_KEY);
+    localStorage.removeItem("wazobia_cart");
+    Cart.items = [];
+    Cart.save(false);
+    sessionStorage.clear();
+
+    if (sb) {
+      await sb.auth.signOut();
+    }
+    currentUser = null;
+
+    window.location.href = "index.html?reset=success";
+  } catch (err) {
+    console.error("Account delete error:", err);
+    toast("Failed to reset account data. Please try again.", "error");
   }
 }
 
@@ -182,6 +267,7 @@ async function initAuth() {
         }
 
         checkWelcomeEmail(user);
+        syncCloudCartOnAuth(user);
 
         if (!sessionStorage.getItem("auth_toast_shown")) {
           const m = user.user_metadata || {};
@@ -191,6 +277,11 @@ async function initAuth() {
           sessionStorage.setItem("auth_toast_shown", "true");
         }
       };
+
+      if (window.location.search.includes("reset=success")) {
+        toast("Your account and test data have been reset. You can now sign in fresh.", "success", 5000);
+        window.history.replaceState(null, "", window.location.pathname);
+      }
 
       if (currentUser) {
         handleUserSession(currentUser);

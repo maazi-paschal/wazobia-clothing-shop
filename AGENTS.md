@@ -68,9 +68,14 @@ create table orders (
   created_at timestamptz not null default now()
 );
 alter table orders enable row level security;
--- Inserts happen server-side. Preferred: use SUPABASE_SERVICE_ROLE_KEY (bypasses RLS).
--- If only the anon key is configured, add an insert policy:
--- create policy "anon insert orders" on orders for insert with check (true);
+
+create table user_carts (
+  user_email text primary key,
+  items jsonb default '[]'::jsonb,
+  updated_at timestamptz default now()
+);
+alter table user_carts enable row level security;
+create policy "public user_carts access" on user_carts for all using (true) with check (true);
 ```
 
 ## Authentication Flow
@@ -112,7 +117,7 @@ alter table orders enable row level security;
 ## Handoff Checklist
 
 - [x] Config fetched dynamically via `/api/config` (`api/config.js` & `netlify/functions/config.js`); local `.env` (gitignored) holds Supabase + Mailgun values. Set env vars on host (Vercel/Netlify).
-- [ ] `products` / `orders` tables + RLS created; Google provider enabled.
+- [ ] `products` / `orders` / `user_carts` tables + RLS created; Google provider enabled.
 - [ ] Mailgun domain configured; recipient authorized if sandbox.
 - [ ] Manual, DB, email and console checks above passed.
 - [x] This file updated with any changes made this turn.
@@ -127,3 +132,4 @@ alter table orders enable row level security;
 - Dynamic Configuration & Secret Elimination: Created serverless endpoints `api/config.js` and `netlify/functions/config.js` serving `process.env.SUPABASE_URL` and `process.env.SUPABASE_ANON_KEY`; updated `netlify.toml` routing; refactored `common.js` to initialize Supabase via dynamic `initSupabase()` fetch; scrubbed all hardcoded credentials/secrets across repo (`common.js`, `README.md`, `.env.example`, `netlify.toml`).
 - Auth Polish & Automated Welcome Email: Configured dynamic OAuth `redirectTo` (`origin + pathname`), automatic URL `#access_token` hash scrubbing on sign in, sleek 4-second top-right sign-in success toast (`sessionStorage` guarded), rearranged navbar right-side items, created serverless Mailgun welcome email handler (`api/welcome.js` & `netlify/functions/welcome.js`), and implemented client-side single-fire welcome trigger (`localStorage.setItem('wazobia_welcome_sent_' + email)`).
 - Checkout Payload Sanitization & Detailed Error Reporting: Updated `api/checkout.js` and `netlify/functions/checkout.js` to sanitize order payloads with robust fallbacks, return detailed 500 error responses with `{ error, details }` on Supabase insert failures, and execute Mailgun receipt dispatch in a non-blocking try/catch block so delivery issues do not break order confirmation.
+- 2-Way Cloud Cart Sync & Account Reset Feature: Implemented automatic 2-way cloud cart synchronization in `common.js` with Supabase `user_carts` table, added tab focus auto-sync across windows, created Account Management danger card on `profile.html`, and implemented `deleteUserAccount()` function to clear cloud carts, test orders, welcome email flags, and sign out with notification.

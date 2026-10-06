@@ -320,3 +320,12 @@ input, select, textarea { font-family: inherit; font-size: 0.95rem; color: inher
   .field-row { flex-direction: column; gap: 0; }
   .panel { padding: 22px; }
 }
+
+/* Account Reset & Danger Zone */
+.danger-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 32px; transition: border-color .25s; }
+.danger-card:hover { border-color: #ef4444; }
+.danger-info h3 { font-family: var(--font-display); text-transform: uppercase; font-size: 0.95rem; letter-spacing: 0.08em; margin-bottom: 4px; color: var(--text-primary); }
+.danger-info p { color: var(--text-muted); font-size: 0.85rem; }
+.btn-danger { background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 12px 20px; font-size: 0.72rem; letter-spacing: var(--tracking); text-transform: uppercase; font-weight: 600; transition: all 0.25s var(--ease); cursor: pointer; }
+.btn-danger:hover { background: #ef4444; color: #ffffff; }
+
