@@ -14,6 +14,7 @@ try {
 
 const checkout = require("./api/checkout.js");
 const configHandler = require("./api/config.js");
+const welcomeHandler = require("./api/welcome.js");
 const PORT = process.env.PORT || 3000;
 const TYPES = { ".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".ico": "image/x-icon" };
 
@@ -23,6 +24,17 @@ http.createServer((req, res) => {
     res.status = (code) => { res.statusCode = code; return res; };
     res.json = (obj) => { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(obj)); };
     return configHandler(req, res).catch((e) => { console.error(e); res.status(500).json({ error: "Server error" }); });
+  }
+  if (url.pathname === "/api/welcome") {
+    let raw = "";
+    req.on("data", (c) => { raw += c; if (raw.length > 1e6) req.destroy(); });
+    req.on("end", () => {
+      try { req.body = raw ? JSON.parse(raw) : {}; } catch { req.body = null; }
+      res.status = (code) => { res.statusCode = code; return res; };
+      res.json = (obj) => { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(obj)); };
+      welcomeHandler(req, res).catch((e) => { console.error(e); res.status(500).json({ error: "Server error" }); });
+    });
+    return;
   }
   if (url.pathname === "/api/checkout") {
     let raw = "";

@@ -11,3 +11,9 @@
   from = "/api/checkout"
   to = "/.netlify/functions/checkout"
   status = 200
+
+[[redirects]]
+  from = "/api/welcome"
+  to = "/.netlify/functions/welcome"
+  status = 200
+

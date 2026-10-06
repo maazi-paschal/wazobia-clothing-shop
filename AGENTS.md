@@ -93,6 +93,8 @@ alter table orders enable row level security;
 
 `GET /api/config` → `200 { supabaseUrl, supabaseAnonKey }`. Returns JSON config extracted securely from environment variables.
 
+`POST /api/welcome` body `{ email, firstName, siteUrl }` → `200 { success: true, message: "Welcome email sent" }`. Dispatches luxury Afro-minimalist welcome email with 10% discount code `WAZOBIA10` via Mailgun REST API. Deduplicated per user email via `localStorage.getItem('wazobia_welcome_sent_' + email)`.
+
 ## Verification & Testing Protocol
 
 1. **Manual browser checks:** run `node server.js`; verify hero, filters, size pills, add-to-bag toast, drawer steppers, free-shipping bar, cookie banner, refresh persistence, checkout form, receipt modal, Continue Shopping clears cart.
@@ -123,3 +125,4 @@ alter table orders enable row level security;
 - Luxury Editorial Footer & Pay on Delivery: Added dark luxury footer (#111111) with newsletter subscription and policy modals across index.html and checkout.html; implemented Pay on Delivery flow with phone number validation, "TEST STORE • PAY ON DELIVERY" badge, doorstep total highlight, and Mailgun confirmation email with `TOTAL DUE ON DELIVERY` banner.
 - Phone Selector, Navbar Refinement & Profile Page: Implemented country code dropdown (+234, +1, +44, +233, +254, +27) on checkout.html; rearranged navbar to position Bag icon left of extreme-right circular user avatar with "Hi, [FirstName]" greeting on desktop; created dedicated profile.html displaying user info, VIP badge, and dynamic order history queried from Supabase.
 - Dynamic Configuration & Secret Elimination: Created serverless endpoints `api/config.js` and `netlify/functions/config.js` serving `process.env.SUPABASE_URL` and `process.env.SUPABASE_ANON_KEY`; updated `netlify.toml` routing; refactored `common.js` to initialize Supabase via dynamic `initSupabase()` fetch; scrubbed all hardcoded credentials/secrets across repo (`common.js`, `README.md`, `.env.example`, `netlify.toml`).
+- Auth Polish & Automated Welcome Email: Configured dynamic OAuth `redirectTo` (`origin + pathname`), automatic URL `#access_token` hash scrubbing on sign in, sleek 4-second top-right sign-in success toast (`sessionStorage` guarded), rearranged navbar right-side items, created serverless Mailgun welcome email handler (`api/welcome.js` & `netlify/functions/welcome.js`), and implemented client-side single-fire welcome trigger (`localStorage.setItem('wazobia_welcome_sent_' + email)`).
