@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout | WAZOBIA</title>
+  <meta name="description" content="Securely complete your Wazobia order with Pay on Delivery.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo">WAZOBIA</a>
+      <div class="nav-actions"><div class="auth-area" id="auth-area"></div></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="checkout-head">
+      <span class="test-badge tracked">TEST STORE • PAY ON DELIVERY</span>
+      <nav class="breadcrumbs tracked" aria-label="Breadcrumb">
+        <a href="index.html">Home</a><span>›</span><a href="index.html" id="bc-cart">Cart</a><span>›</span><span class="current">Checkout</span>
+      </nav>
+      <h1 class="checkout-title">Checkout</h1>
+    </div>
+
+    <div class="checkout-grid">
+      <form id="checkout-form" novalidate>
+        <section class="panel">
+          <h2>Customer Details</h2>
+          <div class="signin-card" id="signin-card">
+            <p>Have a Google account? Sign in to pre-fill your details.</p>
+            <button type="button" class="btn" id="checkout-signin">Sign in with Google</button>
+          </div>
+          <div class="field-row">
+            <div class="field"><label class="tracked" for="name">Full Name</label><input id="name" required autocomplete="name"></div>
+            <div class="field"><label class="tracked" for="email">Email</label><input id="email" type="email" required autocomplete="email"></div>
+          </div>
+          <div class="field"><label class="tracked" for="phone">Phone Number</label><input id="phone" type="tel" required autocomplete="tel" placeholder="+234 800 000 0000"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Delivery Address</h2>
+          <div class="field"><label class="tracked" for="street">Street Address</label><input id="street" required autocomplete="street-address"></div>
+          <div class="field-row">
+            <div class="field"><label class="tracked" for="city">City</label><input id="city" required autocomplete="address-level2"></div>
+            <div class="field"><label class="tracked" for="state">State / Region</label><input id="state" required autocomplete="address-level1"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label class="tracked" for="zip">Postal Code</label><input id="zip" required autocomplete="postal-code"></div>
+            <div class="field"><label class="tracked" for="country">Country</label>
+              <select id="country" required autocomplete="country-name">
+                <option>Nigeria</option><option>Ghana</option><option>United Kingdom</option><option>United States</option><option>Canada</option><option>Other</option>
+              </select></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Payment Method</h2>
+          <div class="pay-options">
+            <label class="pay-opt"><input type="radio" name="pay" value="cod" checked><span class="tracked">Cash / Transfer on Delivery (Pay when your package arrives)</span></label>
+          </div>
+          <div class="callout">
+            <strong>No upfront payment required.</strong> You will inspect your package and pay the courier upon delivery.
+          </div>
+        </section>
+      </form>
+
+      <aside class="panel summary" aria-label="Order summary">
+        <h2>Order Summary</h2>
+        <div id="sum-items"></div>
+        <div class="sum-totals">
+          <div class="row"><span>Subtotal</span><span id="s-sub">$0.00</span></div>
+          <div class="row"><span>Shipping</span><span id="s-ship">$0.00</span></div>
+          <div class="row total"><span>Total</span><span id="s-total">$0.00</span></div>
+          <div class="total-due">
+            <span class="tracked">Total Amount to Pay on Delivery:</span>
+            <strong id="s-total-due">$0.00</strong>
+          </div>
+        </div>
+        <button class="btn btn-accent btn-block" id="place-order" form="checkout-form" type="submit" style="margin-top:24px">Confirm Order (Pay on Delivery)</button>
+      </aside>
+    </div>
+  </main>
+
+  <div class="modal-bg" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="check ok">✓</div>
+      <h2 id="modal-title">Order Placed Successfully!</h2>
+      <p class="muted" id="modal-sub"></p>
+      <div class="receipt" id="receipt"></div>
+      <button class="btn btn-block" id="continue">Continue Shopping</button>
+    </div>
+  </div>
+
+  <footer class="site-footer" style="margin-top: 64px;">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="logo">WAZOBIA</a>
+          <p class="footer-tagline">Contemporary Afro-minimalism handcrafted for the global wardrobe.</p>
+          <form class="newsletter" id="newsletter-form-co" onsubmit="event.preventDefault(); handleNewsletter();">
+            <input type="email" id="newsletter-email" placeholder="Enter email for exclusive drops" required aria-label="Enter email for newsletter">
+            <button type="submit">Join</button>
+          </form>
+        </div>
+        <div class="footer-col">
+          <h3>Collections</h3>
+          <ul>
+            <li><a href="index.html#catalog">Men</a></li>
+            <li><a href="index.html#catalog">Women</a></li>
+            <li><a href="index.html#catalog">New Arrivals</a></li>
+            <li><a href="index.html#catalog">Best Sellers</a></li>
+            <li><a href="index.html#catalog">Outerwear</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h3>Customer Care</h3>
+          <ul>
+            <li><a onclick="showFooterDialog('Order Tracking', 'Track your order status using your Order Reference (#WZ-XXXXXX) sent to your email.')">Order Tracking</a></li>
+            <li><a onclick="showFooterDialog('Shipping & Delivery', 'Standard delivery takes 2–5 business days. Free shipping applies on orders over $100.')">Shipping & Delivery</a></li>
+            <li><a onclick="showFooterDialog('Returns & Exchanges', 'We offer hassle-free 14-day returns on all unworn items in original packaging.')">Returns & Exchanges</a></li>
+            <li><a onclick="showFooterDialog('Size Guide', 'Our garments fit true to size. For oversized fits, we recommend sizing up.')">Size Guide</a></li>
+            <li><a onclick="showFooterDialog('FAQs', 'Got questions? Contact our customer care team at care@wazobia.com.')">FAQs</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h3>Legal & Policies</h3>
+          <ul>
+            <li><a onclick="showFooterDialog('Privacy Policy', 'Your privacy is paramount. We do not sell or share customer personal data.')">Privacy Policy</a></li>
+            <li><a onclick="showFooterDialog('Terms of Service', 'By using Wazobia, you agree to our standard terms of service and purchasing guidelines.')">Terms of Service</a></li>
+            <li><a onclick="showFooterDialog('Cookie Policy', 'We use essential cookies to maintain your shopping bag and session.')">Cookie Policy</a></li>
+            <li><a onclick="showFooterDialog('Delivery Terms', 'Pay on delivery requires exact cash or bank transfer to our courier partner.')">Delivery Terms</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 WAZOBIA. All rights reserved.</span>
+        <div class="reassure">
+          <span>✓ Pay on Delivery Available</span>
+          <span>✓ 100% Authentic Fabrics</span>
+          <span>✓ Eco-Conscious Packaging</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="common.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function renderSummary() {
+      $("sum-items").innerHTML = Cart.items.length ? Cart.items.map((i) => `
+        <div class="sum-line"><img src="${esc(i.image_url)}" alt="${esc(i.name)}">
+          <div><strong>${esc(i.name)}</strong><div class="tracked" style="color:var(--text-muted)">Size ${esc(i.size)} · Qty ${i.quantity}</div></div>
+          <span>${fmt(i.price * i.quantity)}</span></div>`).join("")
+        : '<p class="cart-empty">Your bag is empty. <a href="index.html" class="link-btn">Shop the collection</a></p>';
+      $("s-sub").textContent = fmt(Cart.subtotal());
+      $("s-ship").textContent = Cart.shipping() ? fmt(Cart.shipping()) : (Cart.items.length ? "Free" : "—");
+      const tot = fmt(Cart.total());
+      $("s-total").textContent = tot;
+      $("s-total-due").textContent = tot;
+      $("place-order").disabled = submitting || !Cart.items.length;
+    }
+
+    document.addEventListener("authchange", (e) => {
+      const u = e.detail;
+      $("signin-card").style.display = u ? "none" : "flex";
+      if (u) {
+        const m = u.user_metadata || {};
+        if (!$("name").value) $("name").value = m.full_name || m.name || "";
+        if (!$("email").value) $("email").value = u.email || "";
+      }
+    });
+    $("checkout-signin").onclick = signInWithGoogle;
+
+    /* ---- Validation & sanitization ---- */
+    const RULES = {
+      name:   { max: 100, test: (v) => v.length >= 2, msg: "Enter your full name." },
+      email:  { max: 254, test: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v), msg: "Enter a valid email address." },
+      phone:  { max: 30,  test: (v) => /^[0-9+\s()-]{7,}$/.test(v), msg: "Enter a valid phone number." },
+      street: { max: 150, test: (v) => v.length >= 5, msg: "Enter your delivery street address." },
+      city:   { max: 80,  test: (v) => v.length >= 2, msg: "Enter your city." },
+      state:  { max: 80,  test: (v) => v.length >= 2, msg: "Enter your state or region." },
+      zip:    { max: 12,  test: (v) => /^[A-Za-z0-9][A-Za-z0-9 -]{2,10}$/.test(v), msg: "Enter a valid postal code." },
+    };
+    // Strip control chars and angle brackets, collapse whitespace, cap length.
+    const clean = (v, max) => String(v || "").replace(/[\u0000-\u001F\u007F<>]/g, "").replace(/\s+/g, " ").trim().slice(0, max);
+    Object.keys(RULES).forEach((id) => {
+      const el = $(id); el.maxLength = RULES[id].max;
+      const err = document.createElement("span"); err.className = "err"; err.id = "err-" + id; err.setAttribute("role", "alert");
+      el.after(err); el.setAttribute("aria-describedby", err.id);
+      el.addEventListener("input", () => setFieldError(id, ""));
+    });
+    function setFieldError(id, msg) {
+      $("err-" + id).textContent = msg;
+      $(id).classList.toggle("invalid", !!msg);
+      $(id).setAttribute("aria-invalid", msg ? "true" : "false");
+    }
+    function validateForm() {
+      const values = {}; let firstBad = null;
+      Object.keys(RULES).forEach((id) => {
+        const v = values[id] = clean($(id).value, RULES[id].max);
+        const ok = RULES[id].test(v);
+        setFieldError(id, ok ? "" : RULES[id].msg);
+        if (!ok && !firstBad) firstBad = id;
+      });
+      if (firstBad) $(firstBad).focus();
+      return firstBad ? null : values;
+    }
+
+    let submitting = false;
+    function setLoading(on) {
+      submitting = on;
+      const btn = $("place-order");
+      btn.disabled = on || !Cart.items.length;
+      btn.setAttribute("aria-busy", on ? "true" : "false");
+      btn.innerHTML = on ? '<span class="spinner" aria-hidden="true"></span> Processing…' : "Confirm Order (Pay on Delivery)";
+    }
+
+    $("checkout-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (submitting) return;
+      if (!Cart.items.length) return toast("Your bag is empty.", "error");
+      const v = validateForm();
+      if (!v) return toast("Please correct the highlighted fields.", "error");
+
+      const payload = {
+        user_email: v.email,
+        customer_name: v.name,
+        phone_number: v.phone,
+        shipping_address: { street: v.street, city: v.city, state: v.state, postal_code: v.zip, country: clean($("country").value, 60), phone_number: v.phone },
+        items: Cart.items.map((i) => ({ id: i.id, name: i.name, size: i.size, quantity: i.quantity, price: i.price })),
+        total_amount: Number(Cart.total().toFixed(2)),
+        payment_method: "Pay on Delivery",
+        status: "Order Placed - Pending Delivery",
+      };
+      setLoading(true);
+      try {
+        const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Checkout failed. Please try again.");
+        showReceipt(data, { ...payload, total_amount: data.total_amount ?? payload.total_amount });
+        $("place-order").disabled = true;
+        submitting = true;
+      } catch (err) {
+        console.error("Checkout error:", err);
+        toast(err.message || "Network error. Please try again.", "error");
+        setLoading(false);
+      }
+    });
+
+    function showReceipt(data, p) {
+      $("modal-sub").textContent = data.email_sent === false ? "Your order has been received. (Confirmation email could not be sent.)" : `A detailed receipt and delivery instructions have been sent to ${p.user_email}.`;
+      const a = p.shipping_address;
+      $("receipt").innerHTML = `
+        <div class="row"><span class="tracked">Order Reference</span><strong>#${esc(data.order_id)}</strong></div>
+        <div class="row"><span class="tracked">Customer</span><span>${esc(p.customer_name)}</span></div>
+        <div class="row"><span class="tracked">Phone</span><span>${esc(p.phone_number)}</span></div>
+        <div class="row"><span class="tracked">Email</span><span>${esc(p.user_email)}</span></div>
+        <div class="row"><span class="tracked">Deliver to</span><span style="text-align:right">${esc(a.street)}, ${esc(a.city)}, ${esc(a.state)} ${esc(a.postal_code)}, ${esc(a.country)}</span></div>
+        <div class="row"><span class="tracked">Payment Method</span><span>Pay on Delivery</span></div>
+        <div class="amount-due">Amount Due at Doorstep: <strong>${fmt(p.total_amount)}</strong></div>`;
+      $("modal").classList.add("open");
+    }
+    $("continue").onclick = () => { Cart.clear(); window.location.href = "index.html"; };
+
+    Cart.onChange(renderSummary);
+    renderSummary();
+    initAuth();
+  </script>
+</body>
+</html>

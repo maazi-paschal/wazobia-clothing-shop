@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WAZOBIA | Contemporary Afro-Minimalist Fashion</title>
+  <meta name="description" content="Wazobia is contemporary Afro-minimalist fashion and apparel. Explore editorial menswear, womenswear and accessories with free delivery over $100.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="#top" class="logo" id="logo">WAZOBIA</a>
+      <nav class="nav-links tracked" aria-label="Categories">
+        <a href="#catalog" data-cat="All" id="nav-all" class="active">Shop All</a>
+        <a href="#catalog" data-cat="Men" id="nav-men">Men</a>
+        <a href="#catalog" data-cat="Women" id="nav-women">Women</a>
+        <a href="#catalog" data-cat="Accessories" id="nav-accessories">Accessories</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="auth-area" id="auth-area"></div>
+        <button class="cart-btn tracked" id="cart-btn" aria-label="Open cart">Bag <span class="cart-count" id="cart-count">0</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-label="Pre-Fall 2026 collection">
+      <img class="hero-bg" src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&auto=format&fit=crop" alt="">
+      <div class="hero-copy">
+        <span class="hero-badge tracked">Pre-Fall '26 • The Afro-Minimalist Collection</span>
+        <h1><span>Culture.</span> <span>Craft.</span> <span>Contemporary.</span></h1>
+        <p>Handcrafted everyday luxury inspired by African heritage and modern minimalism.</p>
+        <div class="hero-cta">
+          <button class="btn btn-light" id="hero-men" data-shop="Men">Shop Men</button>
+          <button class="btn btn-ghost" id="hero-women" data-shop="Women">Shop Women</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="value-strip">
+      <div class="container tracked">
+        <span><i class="dot">●</i>Free Worldwide Delivery over $100</span>
+        <span><i class="dot">●</i>Authentic Premium Fabrics</span>
+        <span><i class="dot">●</i>Easy 14-Day Returns</span>
+      </div>
+    </div>
+
+    <section class="catalog" id="catalog">
+      <div class="container">
+        <div class="section-head">
+          <h2>The Collection</h2>
+          <span class="tracked" style="color:var(--text-muted)" id="result-count"></span>
+        </div>
+
+        <div class="filter-bar">
+          <!-- Desktop: pills -->
+          <div class="filters-desktop" id="filters-desktop">
+            <div class="filter-group" id="cat-filters">
+              <span class="filter-label tracked">Category</span>
+              <button class="pill tracked active" data-cat="All">All</button>
+              <button class="pill tracked" data-cat="Men">Men</button>
+              <button class="pill tracked" data-cat="Women">Women</button>
+              <button class="pill tracked" data-cat="Accessories">Accessories</button>
+              <button class="pill tracked" data-cat="Outerwear">Outerwear</button>
+            </div>
+            <div class="filter-group" id="size-filters">
+              <span class="filter-label tracked">Size</span>
+              <button class="pill tracked active" data-size="">Any</button>
+              <button class="pill tracked" data-size="S">S</button>
+              <button class="pill tracked" data-size="M">M</button>
+              <button class="pill tracked" data-size="L">L</button>
+              <button class="pill tracked" data-size="XL">XL</button>
+              <button class="pill tracked" data-size="XXL">XXL</button>
+            </div>
+            <div class="filter-meta">
+              <span class="filter-count tracked" data-role="count" hidden></span>
+              <button class="link-btn tracked reset-link" data-role="reset" hidden>Reset</button>
+              <div class="select-wrap" style="min-width:210px">
+                <select id="sort-desktop" aria-label="Sort by"></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile: dropdowns -->
+          <div class="filters-mobile" id="filters-mobile">
+            <div class="select-wrap"><label class="tracked" for="cat-select">Category</label>
+              <select id="cat-select">
+                <option value="All">All Categories</option><option value="Men">Men</option><option value="Women">Women</option>
+                <option value="Accessories">Accessories</option><option value="Outerwear">Outerwear</option>
+              </select></div>
+            <div class="select-wrap"><label class="tracked" for="size-select">Size</label>
+              <select id="size-select">
+                <option value="">All Sizes</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option>
+              </select></div>
+            <div class="select-wrap"><label class="tracked" for="sort-mobile">Sort By</label>
+              <select id="sort-mobile"></select></div>
+            <div class="filter-meta">
+              <span class="filter-count tracked" data-role="count" hidden></span>
+              <button class="link-btn tracked reset-link" data-role="reset" hidden>Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="product-grid" id="product-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="logo">WAZOBIA</a>
+          <p class="footer-tagline">Contemporary Afro-minimalism handcrafted for the global wardrobe.</p>
+          <form class="newsletter" id="newsletter-form" onsubmit="event.preventDefault(); handleNewsletter();">
+            <input type="email" id="newsletter-email" placeholder="Enter email for exclusive drops" required aria-label="Enter email for newsletter">
+            <button type="submit">Join</button>
+          </form>
+        </div>
+        <div class="footer-col">
+          <h3>Collections</h3>
+          <ul>
+            <li><a href="index.html#catalog" onclick="setCat('Men'); scrollToCatalog();">Men</a></li>
+            <li><a href="index.html#catalog" onclick="setCat('Women'); scrollToCatalog();">Women</a></li>
+            <li><a href="index.html#catalog" onclick="scrollToCatalog();">New Arrivals</a></li>
+            <li><a href="index.html#catalog" onclick="scrollToCatalog();">Best Sellers</a></li>
+            <li><a href="index.html#catalog" onclick="setCat('Outerwear'); scrollToCatalog();">Outerwear</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h3>Customer Care</h3>
+          <ul>
+            <li><a onclick="showFooterDialog('Order Tracking', 'Track your order status using your Order Reference (#WZ-XXXXXX) sent to your email.')">Order Tracking</a></li>
+            <li><a onclick="showFooterDialog('Shipping & Delivery', 'Standard delivery takes 2–5 business days. Free shipping applies on orders over $100.')">Shipping & Delivery</a></li>
+            <li><a onclick="showFooterDialog('Returns & Exchanges', 'We offer hassle-free 14-day returns on all unworn items in original packaging.')">Returns & Exchanges</a></li>
+            <li><a onclick="showFooterDialog('Size Guide', 'Our garments fit true to size. For oversized fits, we recommend sizing up.')">Size Guide</a></li>
+            <li><a onclick="showFooterDialog('FAQs', 'Got questions? Contact our customer care team at care@wazobia.com.')">FAQs</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h3>Legal & Policies</h3>
+          <ul>
+            <li><a onclick="showFooterDialog('Privacy Policy', 'Your privacy is paramount. We do not sell or share customer personal data.')">Privacy Policy</a></li>
+            <li><a onclick="showFooterDialog('Terms of Service', 'By using Wazobia, you agree to our standard terms of service and purchasing guidelines.')">Terms of Service</a></li>
+            <li><a onclick="showFooterDialog('Cookie Policy', 'We use essential cookies to maintain your shopping bag and session.')">Cookie Policy</a></li>
+            <li><a onclick="showFooterDialog('Delivery Terms', 'Pay on delivery requires exact cash or bank transfer to our courier partner.')">Delivery Terms</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 WAZOBIA. All rights reserved.</span>
+        <div class="reassure">
+          <span>✓ Pay on Delivery Available</span>
+          <span>✓ 100% Authentic Fabrics</span>
+          <span>✓ Eco-Conscious Packaging</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Cart drawer -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer" aria-label="Shopping bag" aria-hidden="true">
+    <div class="drawer-head"><h2>Your Bag</h2><button class="close-btn" id="drawer-close" aria-label="Close cart">&times;</button></div>
+    <div class="drawer-body" id="drawer-body"></div>
+    <div class="drawer-foot" id="drawer-foot">
+      <div><div class="ship-bar"><div id="ship-fill"></div></div><p class="ship-note" id="ship-note"></p></div>
+      <div class="row"><span>Subtotal</span><span id="d-subtotal">$0.00</span></div>
+      <div class="row"><span>Shipping</span><span id="d-shipping">$0.00</span></div>
+      <div class="row total"><span>Total</span><span id="d-total">$0.00</span></div>
+      <a href="checkout.html" class="btn btn-accent btn-block" id="checkout-btn">Proceed to Checkout</a>
+    </div>
+  </aside>
+
+  <!-- Cookie banner -->
+  <div class="cookie" id="cookie" role="dialog" aria-label="Cookie consent">
+    <p>We use cookies to remember your bag and improve your experience.</p>
+    <div class="cookie-actions">
+      <button class="btn btn-outline" id="cookie-decline">Decline</button>
+      <button class="btn btn-accent" id="cookie-accept">Accept</button>
+    </div>
+  </div>
+
+  <script src="common.js"></script>
+  <script>
+    const SORTS = [["recommended", "Recommended"], ["price-asc", "Price: Low to High"], ["price-desc", "Price: High to Low"], ["rating", "Top Rated"]];
+    const OUTERWEAR_RE = /jacket|coat|bomber|blazer|overshirt|hoodie/i;
+    const isOuterwear = (p) => OUTERWEAR_RE.test(p.name);
+
+    let products = [], filterCat = "All", filterSize = "", sortBy = "recommended";
+    const cardSizes = {}; // selected size per product id
+
+    document.querySelectorAll("#sort-desktop, #sort-mobile").forEach((s) => s.innerHTML = SORTS.map(([v, l]) => `<option value="${v}">${l}</option>`).join(""));
+
+    function normalizeSizes(s) {
+      if (Array.isArray(s)) return s;
+      if (typeof s === "string") { try { const j = JSON.parse(s); if (Array.isArray(j)) return j; } catch {} return s.split(",").map((x) => x.trim()).filter(Boolean); }
+      return ["S", "M", "L", "XL", "XXL"];
+    }
+
+    async function loadProducts() {
+      try {
+        showLoadingSkeleton(true);
+        if (!sb) throw new Error("Supabase client unavailable");
+        const { data, error } = await sb.from("products").select("*");
+        if (error) throw error;
+        renderProducts(data);
+      } catch (err) {
+        console.error("Database fetch error:", err);
+        showErrorMessage("Unable to load products. Please refresh the page.");
+      } finally {
+        showLoadingSkeleton(false);
+      }
+    }
+
+    function showLoadingSkeleton(on) {
+      const grid = document.getElementById("product-grid");
+      grid.setAttribute("aria-busy", on ? "true" : "false");
+      if (on) grid.innerHTML = Array.from({ length: 8 }, () => '<div class="card skeleton-card" aria-hidden="true"><div class="card-media skeleton"></div><div class="skeleton line-s"></div><div class="skeleton line-m"></div></div>').join("");
+    }
+
+    function showErrorMessage(msg) {
+      document.getElementById("result-count").textContent = "";
+      document.getElementById("product-grid").innerHTML = `<div class="empty-state" role="alert">${esc(msg)}<br><button class="link-btn tracked" id="retry-btn" style="margin-top:16px">Retry</button></div>`;
+      document.getElementById("retry-btn").onclick = loadProducts;
+    }
+
+    function activeFilterCount() { return (filterCat !== "All") + (filterSize !== "") + (sortBy !== "recommended"); }
+
+    function syncControls() {
+      document.querySelectorAll("#cat-filters .pill").forEach((b) => b.classList.toggle("active", b.dataset.cat === filterCat));
+      document.querySelectorAll("#size-filters .pill").forEach((b) => b.classList.toggle("active", b.dataset.size === filterSize));
+      document.querySelectorAll(".nav-links a").forEach((a) => a.classList.toggle("active", a.dataset.cat === filterCat));
+      document.getElementById("cat-select").value = filterCat;
+      document.getElementById("size-select").value = filterSize;
+      document.getElementById("sort-desktop").value = sortBy;
+      document.getElementById("sort-mobile").value = sortBy;
+      const n = activeFilterCount();
+      document.querySelectorAll('[data-role="count"]').forEach((el) => { el.hidden = !n; el.textContent = n + " active"; });
+      document.querySelectorAll('[data-role="reset"]').forEach((el) => { el.hidden = !n; });
+    }
+
+    function renderProducts(data) {
+      if (Array.isArray(data)) {
+        products = data.map((p) => ({ ...p, price: Number(p.price), sizes: normalizeSizes(p.sizes), rating: p.rating == null ? null : Number(p.rating), reviews: p.reviews || 0, tag: p.tag || null }));
+      }
+      syncControls();
+      const grid = document.getElementById("product-grid");
+      const list = products.filter((p) => {
+        const catOk = filterCat === "All" || (filterCat === "Outerwear" ? isOuterwear(p) : p.category === filterCat);
+        return catOk && (!filterSize || p.sizes.includes(filterSize));
+      });
+      if (sortBy === "price-asc") list.sort((a, b) => a.price - b.price);
+      else if (sortBy === "price-desc") list.sort((a, b) => b.price - a.price);
+      else if (sortBy === "rating") list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      document.getElementById("result-count").textContent = list.length + " pieces";
+      if (!list.length) { grid.innerHTML = `<p class="empty-state">${products.length ? "No pieces match your filters." : "No products are available yet."}</p>`; return; }
+      grid.innerHTML = list.map((p, i) => {
+        const sel = cardSizes[p.id] && p.sizes.includes(cardSizes[p.id]) ? cardSizes[p.id] : (p.sizes.includes("M") ? "M" : p.sizes[0]);
+        cardSizes[p.id] = sel;
+        const best = p.tag === "BESTSELLER";
+        const topTag = p.tag && !best ? `<span class="tag-pill tracked">${esc(p.tag)}</span>` : "";
+        const rating = p.rating != null ? `<div class="rating"><span class="star">★</span> ${p.rating.toFixed(1)} (${p.reviews})</div>` : "";
+        return `<article class="card" style="animation-delay:${Math.min(i, 12) * 50}ms" data-id="${esc(p.id)}">
+          <div class="card-media"><img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy"><span class="cat-pill tracked ${best ? "bestseller" : ""}">${best ? "Bestseller" : esc(p.category)}</span>${topTag}</div>
+          <div class="card-info"><h3>${esc(p.name)}</h3><span class="price">${fmt(p.price)}</span></div>
+          ${rating}
+          <p class="card-desc">${esc(p.description)}</p>
+          <div class="size-row">${p.sizes.map((s) => `<button class="pill sm tracked ${s === sel ? "active" : ""}" data-size="${esc(s)}" aria-label="Size ${esc(s)}">${esc(s)}</button>`).join("")}</div>
+          <button class="btn add-btn">Add to Bag</button>
+        </article>`;
+      }).join("");
+    }
+
+    document.getElementById("product-grid").addEventListener("click", (e) => {
+      const card = e.target.closest(".card"); if (!card) return;
+      const p = products.find((x) => String(x.id) === card.dataset.id);
+      const sizeBtn = e.target.closest(".size-row .pill");
+      const addBtn = e.target.closest(".add-btn");
+      if (sizeBtn) {
+        cardSizes[p.id] = sizeBtn.dataset.size;
+        card.querySelectorAll(".size-row .pill").forEach((b) => b.classList.toggle("active", b === sizeBtn));
+      } else if (addBtn) {
+        Cart.add(p, cardSizes[p.id]);
+        toast(`${p.name} (${cardSizes[p.id]}) added to your bag`);
+        addBtn.textContent = "Added ✓"; addBtn.classList.add("added");
+        clearTimeout(addBtn._t);
+        addBtn._t = setTimeout(() => { addBtn.textContent = "Add to Bag"; addBtn.classList.remove("added"); }, 1500);
+      }
+    });
+
+    function scrollToCatalog() { document.getElementById("catalog").scrollIntoView({ behavior: "smooth" }); }
+    function setCat(cat) { filterCat = cat; renderProducts(); }
+    function resetFilters() { filterCat = "All"; filterSize = ""; sortBy = "recommended"; renderProducts(); }
+
+    document.getElementById("cat-filters").addEventListener("click", (e) => { const b = e.target.closest(".pill"); if (b) setCat(b.dataset.cat); });
+    document.getElementById("size-filters").addEventListener("click", (e) => { const b = e.target.closest(".pill"); if (b) { filterSize = b.dataset.size; renderProducts(); } });
+    document.querySelectorAll(".nav-links a").forEach((a) => a.addEventListener("click", () => setCat(a.dataset.cat)));
+    document.querySelectorAll("[data-shop]").forEach((b) => b.addEventListener("click", () => { setCat(b.dataset.shop); scrollToCatalog(); }));
+    document.getElementById("cat-select").onchange = (e) => setCat(e.target.value);
+    document.getElementById("size-select").onchange = (e) => { filterSize = e.target.value; renderProducts(); };
+    ["sort-desktop", "sort-mobile"].forEach((id) => document.getElementById(id).onchange = (e) => { sortBy = e.target.value; renderProducts(); });
+    document.querySelectorAll('[data-role="reset"]').forEach((b) => b.addEventListener("click", resetFilters));
+
+    /* Drawer */
+    const drawer = document.getElementById("drawer"), overlay = document.getElementById("overlay");
+    function openDrawer() { drawer.classList.add("open"); overlay.classList.add("open"); drawer.setAttribute("aria-hidden", "false"); }
+    function closeDrawer() { drawer.classList.remove("open"); overlay.classList.remove("open"); drawer.setAttribute("aria-hidden", "true"); }
+    document.getElementById("cart-btn").onclick = openDrawer;
+    document.getElementById("drawer-close").onclick = closeDrawer;
+    overlay.onclick = closeDrawer;
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+
+    function renderDrawer() {
+      const body = document.getElementById("drawer-body");
+      const sub = Cart.subtotal();
+      body.innerHTML = Cart.items.length ? Cart.items.map((i) => `
+        <div class="line">
+          <img src="${esc(i.image_url)}" alt="${esc(i.name)}">
+          <div>
+            <div class="line-top"><div><div class="line-name">${esc(i.name)}</div><div class="line-size tracked">Size ${esc(i.size)}</div></div><span class="price">${fmt(i.price * i.quantity)}</span></div>
+            <div class="line-bottom">
+              <div class="stepper" data-id="${esc(i.id)}" data-size="${esc(i.size)}"><button data-act="dec" aria-label="Decrease">−</button><span>${i.quantity}</span><button data-act="inc" aria-label="Increase">+</button></div>
+              <button class="remove tracked" data-act="rm" data-id="${esc(i.id)}" data-size="${esc(i.size)}">Remove</button>
+            </div>
+          </div>
+        </div>`).join("") : '<p class="cart-empty">Your bag is empty.</p>';
+      document.getElementById("d-subtotal").textContent = fmt(sub);
+      document.getElementById("d-shipping").textContent = Cart.shipping() ? fmt(Cart.shipping()) : (sub ? "Free" : "—");
+      document.getElementById("d-total").textContent = fmt(Cart.total());
+      document.getElementById("ship-fill").style.width = Math.min(100, sub / FREE_SHIPPING_THRESHOLD * 100) + "%";
+      document.getElementById("ship-note").textContent = sub >= FREE_SHIPPING_THRESHOLD ? "You've unlocked free shipping." : `Add ${fmt(FREE_SHIPPING_THRESHOLD - sub)} more for free shipping.`;
+      const cb = document.getElementById("checkout-btn");
+      cb.style.pointerEvents = Cart.items.length ? "" : "none"; cb.style.opacity = Cart.items.length ? "" : ".4";
+    }
+    document.getElementById("drawer-body").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-act]"); if (!btn) return;
+      const holder = btn.closest(".stepper") || btn;
+      const id = holder.dataset.id, size = holder.dataset.size;
+      const it = Cart.items.find((x) => String(x.id) === id && x.size === size); if (!it) return;
+      if (btn.dataset.act === "inc") Cart.setQty(it.id, size, it.quantity + 1);
+      else if (btn.dataset.act === "dec") Cart.setQty(it.id, size, it.quantity - 1);
+      else Cart.remove(it.id, size);
+    });
+    Cart.onChange(renderDrawer);
+
+    /* Cookie banner */
+    const cookie = document.getElementById("cookie");
+    if (!localStorage.getItem("wazobia_cookie")) setTimeout(() => cookie.classList.add("show"), 1200);
+    ["accept", "decline"].forEach((v) => document.getElementById("cookie-" + v).onclick = () => { localStorage.setItem("wazobia_cookie", v); cookie.classList.remove("show"); });
+
+    document.getElementById("cart-count").textContent = Cart.count();
+    renderDrawer();
+    initAuth();
+    loadProducts();
+  </script>
+</body>
+</html>
