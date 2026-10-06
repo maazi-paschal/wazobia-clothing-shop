@@ -15,7 +15,10 @@
   <header class="navbar">
     <div class="container nav-inner">
       <a href="index.html" class="logo">WAZOBIA</a>
-      <div class="nav-actions"><div class="auth-area" id="auth-area"></div></div>
+      <div class="nav-actions">
+        <button class="cart-btn tracked" id="cart-btn" aria-label="Open cart">Bag <span class="cart-count" id="cart-count">0</span></button>
+        <div class="auth-area" id="auth-area"></div>
+      </div>
     </div>
   </header>
 
@@ -40,7 +43,21 @@
             <div class="field"><label class="tracked" for="name">Full Name</label><input id="name" required autocomplete="name"></div>
             <div class="field"><label class="tracked" for="email">Email</label><input id="email" type="email" required autocomplete="email"></div>
           </div>
-          <div class="field"><label class="tracked" for="phone">Phone Number</label><input id="phone" type="tel" required autocomplete="tel" placeholder="+234 800 000 0000"></div>
+          <div class="field">
+            <label class="tracked" for="phone">Phone Number</label>
+            <div class="phone-input-group">
+              <select id="country-code" aria-label="Country Code">
+                <option value="+234" selected>🇳🇬 +234</option>
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+233">🇬🇭 +233</option>
+                <option value="+254">🇰🇪 +254</option>
+                <option value="+27">🇿🇦 +27</option>
+                <option value="+1">🇨🇦 +1</option>
+              </select>
+              <input id="phone" type="tel" required autocomplete="tel" placeholder="800 000 0000">
+            </div>
+          </div>
         </section>
 
         <section class="panel">
@@ -229,11 +246,12 @@
       const v = validateForm();
       if (!v) return toast("Please correct the highlighted fields.", "error");
 
+      const fullPhone = clean($("country-code").value, 8) + " " + v.phone;
       const payload = {
         user_email: v.email,
         customer_name: v.name,
-        phone_number: v.phone,
-        shipping_address: { street: v.street, city: v.city, state: v.state, postal_code: v.zip, country: clean($("country").value, 60), phone_number: v.phone },
+        phone_number: fullPhone,
+        shipping_address: { street: v.street, city: v.city, state: v.state, postal_code: v.zip, country: clean($("country").value, 60), phone_number: fullPhone },
         items: Cart.items.map((i) => ({ id: i.id, name: i.name, size: i.size, quantity: i.quantity, price: i.price })),
         total_amount: Number(Cart.total().toFixed(2)),
         payment_method: "Pay on Delivery",

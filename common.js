@@ -75,11 +75,14 @@ function renderAuth() {
   if (el) {
     if (currentUser) {
       const m = currentUser.user_metadata || {};
-      const name = m.full_name || m.name || currentUser.email;
-      el.innerHTML = `<img class="avatar" id="user-avatar" src="${esc(m.avatar_url || m.picture || FALLBACK_IMG)}" alt="${esc(name)}" referrerpolicy="no-referrer">
-        <span class="user-name tracked">${esc(name)}</span>
-        <button class="link-btn tracked" id="sign-out-btn">Sign Out</button>`;
-      document.getElementById("sign-out-btn").onclick = signOut;
+      const fullName = m.full_name || m.name || currentUser.email || "";
+      const firstName = fullName.trim().split(" ")[0] || "Member";
+      const avatarSrc = m.avatar_url || m.picture || FALLBACK_IMG;
+      el.innerHTML = `
+        <a href="profile.html" class="user-profile-link" title="View Profile & Orders">
+          <span class="user-greeting tracked">Hi, ${esc(firstName)}</span>
+          <img class="avatar" id="user-avatar" src="${esc(avatarSrc)}" alt="${esc(fullName)}" referrerpolicy="no-referrer">
+        </a>`;
     } else {
       el.innerHTML = `<button class="google-btn tracked" id="sign-in-btn">${GOOGLE_SVG}Sign in</button>`;
       document.getElementById("sign-in-btn").onclick = signInWithGoogle;

@@ -7,6 +7,9 @@ Wazobia is an editorial-luxury fashion e-commerce storefront (in the spirit of Z
 ## Key Features
 
 - **Afro-minimalist editorial design** — warm alabaster palette, terracotta accent, Syne + Inter typography, frosted sticky navbar, high-fashion hero banner, and 3:4 product cards.
+- **Navbar & Profile Integration** — extreme-right Google user profile avatar with `"Hi, [FirstName]"` greeting on desktop, linking directly to a dedicated `profile.html` page.
+- **Dedicated Profile & Order History (`profile.html`)** — user card with VIP Member badge, avatar, and dynamic order history queried directly from Supabase `orders`.
+- **Phone Input with Country Code Selector** — interactive country code dropdown (🇳🇬 +234, 🇺🇸 +1, 🇬🇧 +44, 🇬🇭 +233, 🇰🇪 +254, 🇿🇦 +27, 🇨🇦 +1) on `checkout.html`.
 - **Luxury Editorial Footer** — dark luxury footer (`#111111`) with brand tagline, newsletter subscription, quick links, policy modals, and reassurance tags across all pages.
 - **Pay on Delivery (COD) Checkout** — streamlined checkout with phone number validation, "TEST STORE • PAY ON DELIVERY" badge, doorstep total highlight, and clear callout explanations.
 - **Google OAuth** via Supabase Auth (avatar/name in navbar, checkout pre-fill).
